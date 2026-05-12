@@ -1,0 +1,24 @@
+# Large local experiment media
+*.mp4
+
+# Generated annotation exports
+annotations/
+
+# Python cache/build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+build/
+dist/
+*.egg-info/
+
+# Local environments
+.venv/
+venv/
+env/
+
+# OS/editor metadata
+.DS_Store
+.idea/
+.vscode/
