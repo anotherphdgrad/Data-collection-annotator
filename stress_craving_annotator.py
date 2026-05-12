@@ -24,6 +24,7 @@ OUTPUT_DIR = Path("annotations")
 @dataclass
 class Annotation:
     entry_number: int
+    task: str
     elapsed_seconds: float
     wall_clock_timestamp: str
     stress: int
@@ -37,6 +38,7 @@ class StressCravingAnnotator:
         self.root.minsize(760, 520)
 
         self.participant_id = StringVar()
+        self.task_value = StringVar()
         self.stress_value = StringVar()
         self.craving_value = StringVar()
         self.status = StringVar(value="Enter participant ID, then click Start Experiment.")
@@ -71,7 +73,7 @@ class StressCravingAnnotator:
 
         controls = ttk.Frame(self.root, padding=(16, 0, 16, 12))
         controls.grid(row=1, column=0, sticky=(W, E))
-        controls.columnconfigure(5, weight=1)
+        controls.columnconfigure(1, weight=1)
 
         self.start_button = ttk.Button(
             controls, text="Start Experiment", command=self.start_experiment
@@ -86,13 +88,17 @@ class StressCravingAnnotator:
         )
         self.end_button.grid(row=0, column=1, sticky=W, padx=(0, 24))
 
-        ttk.Label(controls, text="Stress (0-3)").grid(row=0, column=2, sticky=W, padx=(0, 8))
-        self.stress_entry = ttk.Entry(controls, textvariable=self.stress_value, width=8)
-        self.stress_entry.grid(row=0, column=3, sticky=W, padx=(0, 16))
+        ttk.Label(controls, text="Task/Section").grid(row=1, column=0, sticky=W, pady=(12, 0), padx=(0, 8))
+        self.task_entry = ttk.Entry(controls, textvariable=self.task_value, width=28)
+        self.task_entry.grid(row=1, column=1, sticky=(W, E), pady=(12, 0), padx=(0, 16))
 
-        ttk.Label(controls, text="Craving (0-3)").grid(row=0, column=4, sticky=W, padx=(0, 8))
+        ttk.Label(controls, text="Stress (0-3)").grid(row=1, column=2, sticky=W, pady=(12, 0), padx=(0, 8))
+        self.stress_entry = ttk.Entry(controls, textvariable=self.stress_value, width=8)
+        self.stress_entry.grid(row=1, column=3, sticky=W, pady=(12, 0), padx=(0, 16))
+
+        ttk.Label(controls, text="Craving (0-3)").grid(row=1, column=4, sticky=W, pady=(12, 0), padx=(0, 8))
         self.craving_entry = ttk.Entry(controls, textvariable=self.craving_value, width=8)
-        self.craving_entry.grid(row=0, column=5, sticky=W, padx=(0, 16))
+        self.craving_entry.grid(row=1, column=5, sticky=W, pady=(12, 0), padx=(0, 16))
 
         self.add_button = ttk.Button(
             controls,
@@ -100,7 +106,7 @@ class StressCravingAnnotator:
             command=self.add_annotation,
             state="disabled",
         )
-        self.add_button.grid(row=0, column=6, sticky=E)
+        self.add_button.grid(row=1, column=6, sticky=E, pady=(12, 0))
 
         self.root.bind("<Return>", lambda _event: self.add_annotation())
 
@@ -109,16 +115,18 @@ class StressCravingAnnotator:
         table_frame.columnconfigure(0, weight=1)
         table_frame.rowconfigure(0, weight=1)
 
-        columns = ("entry", "elapsed", "timestamp", "stress", "craving")
+        columns = ("entry", "task", "elapsed", "timestamp", "stress", "craving")
         self.table = ttk.Treeview(table_frame, columns=columns, show="headings", height=12)
         self.table.heading("entry", text="#")
+        self.table.heading("task", text="Task/Section")
         self.table.heading("elapsed", text="Elapsed Seconds")
         self.table.heading("timestamp", text="Wall Clock Timestamp")
         self.table.heading("stress", text="Stress")
         self.table.heading("craving", text="Craving")
         self.table.column("entry", width=50, anchor="center")
+        self.table.column("task", width=170, anchor="w")
         self.table.column("elapsed", width=130, anchor="center")
-        self.table.column("timestamp", width=260, anchor="center")
+        self.table.column("timestamp", width=220, anchor="center")
         self.table.column("stress", width=90, anchor="center")
         self.table.column("craving", width=90, anchor="center")
         self.table.grid(row=0, column=0, sticky=(N, S, W, E))
@@ -158,8 +166,8 @@ class StressCravingAnnotator:
         self.end_button.configure(state="normal")
         self.add_button.configure(state="normal")
         self.export_button.configure(state="disabled")
-        self.stress_entry.focus()
-        self.status.set("Experiment running. Enter stress and craving, then click Add Entry.")
+        self.task_entry.focus()
+        self.status.set("Experiment running. Enter task, stress, and craving, then click Add Entry.")
 
     def end_experiment(self) -> None:
         if not self.experiment_started:
@@ -176,6 +184,12 @@ class StressCravingAnnotator:
         if not self.experiment_started or self.experiment_ended:
             return
 
+        task = self.task_value.get().strip()
+        if not task:
+            messagebox.showerror("Missing task", "Please enter the current task or video section.")
+            self.task_entry.focus()
+            return
+
         stress = self._validated_score(self.stress_value.get(), "stress")
         craving = self._validated_score(self.craving_value.get(), "craving")
         if stress is None or craving is None:
@@ -185,6 +199,7 @@ class StressCravingAnnotator:
         elapsed = time.monotonic() - self.start_monotonic
         annotation = Annotation(
             entry_number=len(self.annotations) + 1,
+            task=task,
             elapsed_seconds=round(elapsed, 3),
             wall_clock_timestamp=datetime.now().isoformat(timespec="seconds"),
             stress=stress,
@@ -196,6 +211,7 @@ class StressCravingAnnotator:
             END,
             values=(
                 annotation.entry_number,
+                annotation.task,
                 f"{annotation.elapsed_seconds:.3f}",
                 annotation.wall_clock_timestamp,
                 annotation.stress,
@@ -230,6 +246,7 @@ class StressCravingAnnotator:
                     "experiment_start",
                     "experiment_end",
                     "entry_number",
+                    "task",
                     "elapsed_seconds",
                     "wall_clock_timestamp",
                     "stress",
@@ -244,6 +261,7 @@ class StressCravingAnnotator:
                         "experiment_start": self._format_datetime(self.start_wall_clock),
                         "experiment_end": self._format_datetime(self.end_wall_clock),
                         "entry_number": annotation.entry_number,
+                        "task": annotation.task,
                         "elapsed_seconds": f"{annotation.elapsed_seconds:.3f}",
                         "wall_clock_timestamp": annotation.wall_clock_timestamp,
                         "stress": annotation.stress,
