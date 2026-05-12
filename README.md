@@ -1,7 +1,7 @@
-# OUD Mayo Stress and Craving Annotator
+# Stress and Craving Annotator
 
 This repository contains a small Python desktop tool for recording participant
-stress and craving reports during the OUD Mayo Zoom/video experiment.
+stress and craving reports during the Zoom/video experiment.
 
 During the experiment, participants are prompted in the video to report stress
 and craving levels on a `0-3` scale. This tool lets the experimenter mark the
@@ -68,7 +68,7 @@ This opens the annotation window.
 2. Open the annotator app:
 
    ```bash
-   python3 stress_craving_annotator.py
+   python stress_craving_annotator.py
    ```
 
 3. Enter the participant ID in the **Participant ID** field.
@@ -135,6 +135,3 @@ The repository ignores:
 - local virtual environments
 - common editor and OS metadata
 
-This keeps the GitHub repository focused on the reusable annotation tool and
-documentation, while keeping local study media and participant output files off
-the remote.
